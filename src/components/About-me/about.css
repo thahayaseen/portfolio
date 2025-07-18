@@ -1,0 +1,37 @@
+/* Animation styles for slide-in from left effect */
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateX(-30px);
+  transition: all 0.8s ease-out;
+}
+
+.animate-on-scroll.animate {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Add a slight delay to stagger the animations */
+.animate-on-scroll:nth-child(1) {
+  transition-delay: 0.1s;
+}
+.animate-on-scroll:nth-child(2) {
+  transition-delay: 0.2s;
+}
+.animate-on-scroll:nth-child(3) {
+  transition-delay: 0.3s;
+}
+.animate-on-scroll:nth-child(4) {
+  transition-delay: 0.4s;
+}
+.animate-on-scroll:nth-child(5) {
+  transition-delay: 0.5s;
+}
+
+/* Optional: Add a different animation for some elements */
+.animate-on-scroll.slide-up {
+  transform: translateY(30px);
+}
+
+.animate-on-scroll.slide-up.animate {
+  transform: translateY(0);
+}
