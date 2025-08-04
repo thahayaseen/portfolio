@@ -1,55 +1,87 @@
-"use client";
-import React, { useEffect, useCallback, useMemo } from "react";
-import './skill.css'
-import { skillColors, skillIcons } from "./skill";
-import Observer from "@/hooks/useObservation";
+"use client"
+import type React from "react"
+import { useEffect, useCallback, useMemo, useState } from "react"
+import "./skill.css"
+import { skillColors, skillIcons } from "./skill"
+import Observer from "@/hooks/useObservation"
 
 // Utility function to convert hex to rgba
-const hexToRgba = (hex: string, alpha: number = 1): string => {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-};
+const hexToRgba = (hex: string, alpha = 1): string => {
+  const r = Number.parseInt(hex.slice(1, 3), 16)
+  const g = Number.parseInt(hex.slice(3, 5), 16)
+  const b = Number.parseInt(hex.slice(5, 7), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
 
 function Skills() {
-  const observer = Observer();
+  const observer = Observer()
+  const [windowWidth, setWindowWidth] = useState(700) // Default fallback value
+  const [isClient, setIsClient] = useState(false)
+
+  // Set up window width tracking
+  useEffect(() => {
+    setIsClient(true)
+
+    // Set initial window width
+    const updateWindowWidth = () => {
+      setWindowWidth(window.innerWidth)
+    }
+
+    // Set initial width
+    updateWindowWidth()
+
+    // Add resize listener
+    window.addEventListener("resize", updateWindowWidth)
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("resize", updateWindowWidth)
+    }
+  }, [])
 
   // Memoize skills data to prevent unnecessary recalculations
   const skillsData = useMemo(() => {
-    return Object.keys(skillIcons).map((skillName) => ({
-      name: skillName,
-      IconComponent: skillIcons[skillName],
-      color: skillColors[skillName],
-    })).filter(skill => skill.IconComponent); // Filter out skills without icons
-  }, []);
+    return Object.keys(skillIcons)
+      .map((skillName) => ({
+        name: skillName,
+        IconComponent: skillIcons[skillName],
+        color: skillColors[skillName],
+      }))
+      .filter((skill) => skill.IconComponent) // Filter out skills without icons
+  }, [])
 
   useEffect(() => {
-    const cards = document.querySelectorAll(".skillcard");
+    if (!isClient) return
+
+    const cards = document.querySelectorAll(".skillcard")
     cards.forEach((card) => {
-      observer(card);
-    });
-  }, [observer]);
+      observer(card)
+    })
+  }, [observer, isClient])
 
   // Optimized mouse move handler with useCallback
-  const handleMouseMove = useCallback((
-    e: React.MouseEvent<HTMLDivElement, MouseEvent>,
-    color: string
-  ) => {
-    const { currentTarget: target } = e;
-    const rect = target.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement, MouseEvent>, color: string) => {
+    const { currentTarget: target } = e
+    const rect = target.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
 
-    target.style.setProperty("--mouse-x", `${x}px`);
-    target.style.setProperty("--mouse-y", `${y}px`);
-    target.style.setProperty("--bg-color", hexToRgba(color, 0.4));
-  }, []);
+    target.style.setProperty("--mouse-x", `${x}px`)
+    target.style.setProperty("--mouse-y", `${y}px`)
+    target.style.setProperty("--bg-color", hexToRgba(color, 0.4))
+  }, [])
 
   const handleMouseLeave = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const { currentTarget: target } = e;
-    target.style.setProperty("--bg-color", "transparent");
-  }, []);
+    const { currentTarget: target } = e
+    target.style.setProperty("--bg-color", "transparent")
+  }, [])
+
+  // Calculate icon size based on window width
+  const getIconSize = useCallback(() => {
+    if (windowWidth < 640) return 32
+    if (windowWidth < 768) return 40
+    return 48
+  }, [windowWidth])
 
   return (
     <section id="skills" className="skills-section py-16 px-4 sm:px-6 lg:px-8">
@@ -72,40 +104,40 @@ function Skills() {
               key={`${skill.name}-${index}`}
               onMouseMove={(e) => handleMouseMove(e, skill.color)}
               onMouseLeave={handleMouseLeave}
-              className="skillcard group "
+              className="skillcard group"
               style={{
                 background: `radial-gradient(200px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), var(--bg-color, transparent) 0%, transparent 80%)`,
-                backdropFilter: 'blur(10px)',
+                backdropFilter: "blur(10px)",
               }}
             >
               {/* Animated border */}
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-600 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" 
-                   style={{ 
-                     background: `linear-gradient(45deg, transparent, ${skill.color}20, transparent)` 
-                   }} 
+              <div
+                className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-600 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{
+                  background: `linear-gradient(45deg, transparent, ${skill.color}20, transparent)`,
+                }}
               />
-              
+
               {/* Content */}
               <div className="relative p-4 sm:p-6 flex flex-col items-center justify-center gap-3 min-h-[100px] sm:min-h-[120px]">
                 <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full bg-gray-50 dark:bg-gray-700 group-hover:bg-white dark:group-hover:bg-gray-600 transition-colors duration-300">
-                  <skill.IconComponent 
-                    size={window.innerWidth < 640 ? 32 : window.innerWidth < 768 ? 40 : 48} 
+                  <skill.IconComponent
+                    size={getIconSize()}
                     color={skill.color}
                     className="transition-transform duration-300 group-hover:scale-110"
                   />
                 </div>
-                
                 <h3 className="text-xs sm:text-sm md:text-base font-medium text-gray-800 dark:text-gray-200 text-center leading-tight group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-300">
                   {skill.name}
                 </h3>
-                
+
                 {/* Skill level indicator (optional) */}
                 <div className="w-full max-w-16 h-1 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div 
+                  <div
                     className="h-full rounded-full transition-all duration-500 ease-out"
-                    style={{ 
+                    style={{
                       backgroundColor: skill.color,
-                      width: `${75 + Math.random() * 25}%` // Random skill level for demo
+                      width: `${75 + Math.random() * 25}%`, // Random skill level for demo
                     }}
                   />
                 </div>
@@ -121,10 +153,8 @@ function Skills() {
           </p>
         </div>
       </div>
-
-    
     </section>
-  );
+  )
 }
 
-export default Skills;
+export default Skills
